@@ -35,7 +35,7 @@ export function pipCount(state: GameState, player: Player): number {
 }
 
 function isBlockedAtDistance(state: GameState, player: Player, distance: number): boolean {
-  const point = state.points[pointFromDistance(player, distance) - 1]
+  const point = state.points[pointFromDistance(opponentOf(player), distance) - 1]
   return point.player === player && point.count >= 2
 }
 

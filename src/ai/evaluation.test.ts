@@ -23,6 +23,14 @@ describe('evaluation', () => {
     expect(blotExposure(state, 'white')).toBeCloseTo(17 / 36)
   })
 
+  it('only counts blockers in the shooter\'s path for combination shots', () => {
+    const state = buildState({
+      white: { 18: 1, 13: 2, 14: 2, 15: 2, 16: 2, 17: 2 },
+      black: { 12: 1 },
+    })
+    expect(blotExposure(state, 'white')).toBeCloseTo(11 / 36)
+  })
+
   it('counts the longest prime', () => {
     const state = buildState({
       white: { 1: 2, 2: 3, 3: 2, 5: 2, 6: 2 },
