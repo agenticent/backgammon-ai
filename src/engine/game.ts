@@ -25,7 +25,11 @@ export function rollForTurn(state: GameState, rng: Rng = Math.random): GameState
   return next
 }
 
-/** Passes the turn to the opponent with no dice rolled yet. */
+/**
+ * Passes the turn to the opponent with no dice rolled yet. Dice still in hand
+ * are discarded, so callers driving the roll -> play -> pass cycle should check
+ * {@link isTurnComplete} first unless they mean to abandon the turn.
+ */
 export function endTurn(state: GameState): GameState {
   const next = cloneState(state)
   next.turn = opponentOf(state.turn)
@@ -33,7 +37,11 @@ export function endTurn(state: GameState): GameState {
   return next
 }
 
-/** Applies a full legal sequence for the turn, throwing if it is not legal. */
+/**
+ * Applies a full legal sequence for the turn, throwing if it is not legal.
+ * Whose turn it is does not change: the caller passes the turn with
+ * {@link endTurn} once the dice are spent.
+ */
 export function playMoveSequence(state: GameState, moves: Move[]): GameState {
   if (!isLegalSequence(state, moves)) {
     throw new IllegalMoveError('move sequence is not legal in this position')
@@ -47,6 +55,11 @@ export function isGameOver(state: GameState): boolean {
 
 export function winner(state: GameState): Player | null {
   return getWinner(state)
+}
+
+/** True when no dice are left to play, whether spent or unplayable. */
+export function isTurnComplete(state: GameState): boolean {
+  return state.dice.length === 0 || generateMoveSequences(state).length === 0
 }
 
 /** True when the player on turn has dice but cannot play any of them. */

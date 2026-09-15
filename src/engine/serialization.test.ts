@@ -57,6 +57,19 @@ describe('serialization', () => {
     expect(() => deserializeGameState(JSON.stringify(json))).toThrow(/invalid dice/)
   })
 
+  it('rejects dice sets no roll can produce', () => {
+    const json = JSON.parse(serializeGameState(createInitialState()))
+    expect(() => deserializeGameState(JSON.stringify({ ...json, dice: [3, 3, 3, 3, 3] }))).toThrow(
+      /invalid dice/,
+    )
+    expect(() => deserializeGameState(JSON.stringify({ ...json, dice: [5, 5, 3] }))).toThrow(
+      /invalid dice/,
+    )
+    expect(deserializeGameState(JSON.stringify({ ...json, dice: [5, 5, 5] })).dice).toEqual([
+      5, 5, 5,
+    ])
+  })
+
   it('rejects a position that does not hold fifteen checkers per player', () => {
     const json = JSON.parse(serializeGameState(createInitialState()))
     json.points[23] = { player: 'white', count: 1 }

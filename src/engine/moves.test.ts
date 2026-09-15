@@ -112,6 +112,38 @@ describe('using both dice', () => {
     ).toBe(true)
   })
 
+  it('accepts either order of the dice when both orders are legal', () => {
+    const state = buildState({ white: { 13: 1 }, dice: [2, 1] })
+    expect(
+      isLegalSequence(state, [
+        { from: 13, to: 11, die: 2, hit: false },
+        { from: 11, to: 10, die: 1, hit: false },
+      ]),
+    ).toBe(true)
+    expect(
+      isLegalSequence(state, [
+        { from: 13, to: 12, die: 1, hit: false },
+        { from: 12, to: 10, die: 2, hit: false },
+      ]),
+    ).toBe(true)
+  })
+
+  it('rejects a sequence that reuses a die it does not have', () => {
+    const state = buildState({ white: { 13: 1 }, dice: [2, 1] })
+    expect(
+      isLegalSequence(state, [
+        { from: 13, to: 11, die: 2, hit: false },
+        { from: 11, to: 9, die: 2, hit: false },
+      ]),
+    ).toBe(false)
+  })
+
+  it('rejects a sequence that misreports a hit', () => {
+    const state = buildState({ white: { 13: 1 }, black: { 11: 1 }, dice: [2] })
+    expect(isLegalSequence(state, [{ from: 13, to: 11, die: 2, hit: true }])).toBe(true)
+    expect(isLegalSequence(state, [{ from: 13, to: 11, die: 2, hit: false }])).toBe(false)
+  })
+
   it('plays the larger die when only one of the two can be played', () => {
     const state = buildState({ white: { 10: 1 }, black: { 2: 2 }, dice: [5, 3] })
     const sequences = generateMoveSequences(state)
@@ -185,8 +217,8 @@ describe('bearing off', () => {
     const state = buildState({ black: { 21: 1, 23: 1 }, turn: 'black', dice: [6, 2] })
     expect(generateSingleMoves(state, 6)).toEqual([{ from: 21, to: 'off', die: 6, hit: false }])
     expect(generateSingleMoves(state, 2)).toEqual([
-      { from: 21, to: 23, die: 2, hit: false },
       { from: 23, to: 'off', die: 2, hit: false },
+      { from: 21, to: 23, die: 2, hit: false },
     ])
   })
 

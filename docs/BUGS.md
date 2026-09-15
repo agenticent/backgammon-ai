@@ -1,0 +1,7 @@
+# Bug log
+
+| Bug | Found by | Root cause | Fix | Test added |
+| --- | --- | --- | --- | --- |
+| Equivalent legal move orders rejected: with one White checker on 13 and dice `[2, 1]`, `13→12→10` was refused while `13→11→10` was accepted | Devin Review on PR #2 | `isLegalSequence` matched submitted moves against `generateMoveSequences`, whose output is deduplicated by final position, so only one ordering per outcome survived | `isLegalSequence` replays the submitted moves against `generateSingleMoves` and enforces the maximum-dice and larger-die rules independently, via the new `maxPlayableDice` | `moves.test.ts` — "accepts either order of the dice when both orders are legal", "rejects a sequence that reuses a die it does not have" |
+| Incorrect hit metadata accepted: a move onto an opposing blot was accepted with `hit: false` | Devin Review on PR #2 | Sequence comparison checked `from`, `to` and `die` but never `hit` | Replay compares the submitted move's `hit` against the generated move's | `moves.test.ts` — "rejects a sequence that misreports a hit" |
+| Black occupied points returned in reverse home order | Devin Review on PR #2 | `occupiedPoints` returned ascending point numbers, which is nearest-home-first only for White | Results are sorted by `distanceFromPoint`, so both players get nearest-home-first | `board.test.ts` — "lists occupied points nearest to home first for both players" |

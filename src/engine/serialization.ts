@@ -33,6 +33,13 @@ function parsePoint(value: unknown, index: number): Point {
   return { player, count }
 }
 
+/** A roll leaves at most two distinct dice, and more than two only on doubles. */
+function isPlayableDiceSet(dice: number[]): boolean {
+  if (dice.length > 4) return false
+  if (dice.length > 2) return dice.every((die) => die === dice[0])
+  return true
+}
+
 function parseCounts(value: unknown, field: string): Record<Player, number> {
   if (typeof value !== 'object' || value === null) {
     throw new InvalidGameStateError(`${field} is not an object`)
@@ -74,7 +81,8 @@ export function deserializeGameState(json: string): GameState {
   if (!isPlayer(turn)) throw new InvalidGameStateError('game state has an invalid turn')
   if (
     !Array.isArray(dice) ||
-    dice.some((die) => typeof die !== 'number' || !Number.isInteger(die) || die < 1 || die > 6)
+    dice.some((die) => typeof die !== 'number' || !Number.isInteger(die) || die < 1 || die > 6) ||
+    !isPlayableDiceSet(dice as number[])
   ) {
     throw new InvalidGameStateError('game state has invalid dice')
   }

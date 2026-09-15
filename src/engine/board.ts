@@ -79,7 +79,7 @@ export function occupiedPoints(state: GameState, player: Player): number[] {
     const point = state.points[pointNumber - 1]
     if (point.player === player && point.count > 0) numbers.push(pointNumber)
   }
-  return numbers
+  return numbers.sort((a, b) => distanceFromPoint(player, a) - distanceFromPoint(player, b))
 }
 
 /** All 15 checkers are in the home board (nothing on the bar, nothing outside). */

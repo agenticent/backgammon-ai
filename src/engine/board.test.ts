@@ -81,6 +81,15 @@ describe('board', () => {
     expect(occupiedPoints(buildState({ white: { 4: 2, 2: 3 } }), 'white')).toEqual([2, 4])
   })
 
+  it('lists occupied points nearest to home first for both players', () => {
+    expect(occupiedPoints(buildState({ white: { 20: 1, 5: 1, 13: 1 } }), 'white')).toEqual([
+      5, 13, 20,
+    ])
+    expect(occupiedPoints(buildState({ black: { 5: 1, 20: 1, 12: 1 } }), 'black')).toEqual([
+      20, 12, 5,
+    ])
+  })
+
   it('detects a winner only once fifteen checkers are borne off', () => {
     expect(getWinner(createInitialState())).toBeNull()
     expect(getWinner(buildState({ off: { white: 14 } }))).toBeNull()

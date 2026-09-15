@@ -3,6 +3,7 @@ import {
   IllegalMoveError,
   endTurn,
   isGameOver,
+  isTurnComplete,
   isTurnForfeited,
   playMoveSequence,
   rollForTurn,
@@ -58,6 +59,15 @@ describe('game flow', () => {
     })
     expect(isTurnForfeited(state)).toBe(true)
     expect(isTurnForfeited(endTurn(state))).toBe(false)
+  })
+
+  it('leaves the turn with the mover until it is passed on', () => {
+    const state = buildState({ white: { 13: 1 }, dice: [3] })
+    const played = playMoveSequence(state, [{ from: 13, to: 10, die: 3, hit: false }])
+    expect(played.turn).toBe('white')
+    expect(isTurnComplete(played)).toBe(true)
+    expect(isTurnComplete(state)).toBe(false)
+    expect(endTurn(played).turn).toBe('black')
   })
 
   it('reports the winner once all fifteen checkers are off', () => {

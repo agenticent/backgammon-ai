@@ -47,7 +47,13 @@ export function generateSingleMoves(state: GameState, die: number): Move[] {
   return moves
 }
 
-/** Applies one move, removing the die it consumed from the remaining dice. */
+/**
+ * Applies one move, removing the die it consumed from the remaining dice.
+ * This is the unchecked primitive used by move generation and by search: it
+ * trusts its input and can produce positions no legal turn could reach. Code
+ * handling moves from a player or another process must go through
+ * `playMoveSequence`, which validates first.
+ */
 export function applyMove(state: GameState, move: Move): GameState {
   const next = cloneState(state)
   const player = next.turn
@@ -79,6 +85,7 @@ export function applyMove(state: GameState, move: Move): GameState {
   return next
 }
 
+/** Unchecked, like {@link applyMove}. */
 export function applyMoves(state: GameState, moves: Move[]): GameState {
   return moves.reduce(applyMove, state)
 }
@@ -137,14 +144,40 @@ export function hasLegalMoves(state: GameState): boolean {
   return generateMoveSequences(state).length > 0
 }
 
-/** True when `moves` is exactly one of the legal sequences for the position. */
+/** Longest sequence of dice the player on turn can actually play. */
+export function maxPlayableDice(state: GameState): number {
+  let longest = 0
+  for (const die of uniqueDice(state.dice)) {
+    for (const move of generateSingleMoves(state, die)) {
+      longest = Math.max(longest, 1 + maxPlayableDice(applyMove(state, move)))
+      if (longest === state.dice.length) return longest
+    }
+  }
+  return longest
+}
+
+/**
+ * True when `moves` is a legal way to play the turn. The moves are replayed
+ * one by one rather than matched against {@link generateMoveSequences}, so
+ * orderings that reach the same position as another ordering are all accepted.
+ */
 export function isLegalSequence(state: GameState, moves: Move[]): boolean {
-  return generateMoveSequences(state).some(
-    (candidate) =>
-      candidate.moves.length === moves.length &&
-      candidate.moves.every((move, index) => {
-        const other = moves[index]
-        return move.from === other.from && move.to === other.to && move.die === other.die
-      }),
-  )
+  let current = state
+  for (const move of moves) {
+    if (!current.dice.includes(move.die)) return false
+    const legal = generateSingleMoves(current, move.die).find(
+      (candidate) => candidate.from === move.from && candidate.to === move.to,
+    )
+    if (legal === undefined || legal.hit !== move.hit) return false
+    current = applyMove(current, legal)
+  }
+
+  if (moves.length !== maxPlayableDice(state)) return false
+
+  const distinctDice = uniqueDice(state.dice)
+  if (moves.length === 1 && distinctDice.length > 1) {
+    const largest = distinctDice[0]
+    if (moves[0].die !== largest && generateSingleMoves(state, largest).length > 0) return false
+  }
+  return true
 }
