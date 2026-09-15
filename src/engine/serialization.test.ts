@@ -76,6 +76,18 @@ describe('serialization', () => {
     expect(() => deserializeGameState(JSON.stringify(json))).toThrow(/15 checkers/)
   })
 
+  it('rejects a position where both players have borne everything off', () => {
+    const empty = Array.from({ length: 24 }, () => ({ player: null, count: 0 }))
+    const json = {
+      points: empty,
+      bar: { white: 0, black: 0 },
+      off: { white: 15, black: 15 },
+      turn: 'white',
+      dice: [],
+    }
+    expect(() => deserializeGameState(JSON.stringify(json))).toThrow(/both players/)
+  })
+
   it('rejects an owned point with no checkers on it', () => {
     const json = JSON.parse(serializeGameState(createInitialState()))
     json.points[2] = { player: 'white', count: 0 }

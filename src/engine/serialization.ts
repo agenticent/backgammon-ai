@@ -100,5 +100,8 @@ export function deserializeGameState(json: string): GameState {
       throw new InvalidGameStateError(`${player} does not have ${CHECKERS_PER_PLAYER} checkers`)
     }
   }
+  if (state.off.white >= CHECKERS_PER_PLAYER && state.off.black >= CHECKERS_PER_PLAYER) {
+    throw new InvalidGameStateError('both players cannot have borne off every checker')
+  }
   return state
 }
