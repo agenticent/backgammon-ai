@@ -71,15 +71,15 @@ function canHitWithRoll(
 // This estimates shots directly rather than using the engine's move generator.
 export function blotExposure(state: GameState, player: Player): number {
   const opponent = opponentOf(player)
+  const sources = occupiedPoints(state, opponent).map((source) => ({
+    distance: distanceFromPoint(opponent, source),
+  }))
+  if (state.bar[opponent] > 0) sources.push({ distance: BAR_DISTANCE })
   let exposure = 0
 
   for (const pointNumber of occupiedPoints(state, player)) {
     if (state.points[pointNumber - 1].count !== 1) continue
     const targetDistance = distanceFromPoint(opponent, pointNumber)
-    const sources = occupiedPoints(state, opponent).map((source) => ({
-      distance: distanceFromPoint(opponent, source),
-    }))
-    if (state.bar[opponent] > 0) sources.push({ distance: BAR_DISTANCE })
 
     let hittingRolls = 0
     for (let d1 = 1; d1 <= 6; d1 += 1) {

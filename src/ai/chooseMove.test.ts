@@ -52,12 +52,10 @@ describe('chooseMoveSequence', () => {
           expect(choice).toBeNull()
         } else {
           expect(choice).not.toBeNull()
-          expect(
-            legal.some(
-              (candidate) =>
-                JSON.stringify(candidate.moves) === JSON.stringify(choice!.moves),
-            ),
-          ).toBe(true)
+          expect(legal.map((sequence) => JSON.stringify(sequence.moves))).toContain(
+            JSON.stringify(choice!.moves),
+          )
+          expect(choice!.result).toEqual(applyMoves(state, choice!.moves))
           expect(isLegalSequence(state, choice!.moves)).toBe(true)
         }
       }
@@ -66,10 +64,10 @@ describe('chooseMoveSequence', () => {
 
   it('normal difficulty prefers hitting an exposed blot', () => {
     const state = buildState({
-      white: { 6: 1, 8: 1 },
-      black: { 3: 1 },
+      white: { 13: 2, 8: 2, 6: 1 },
+      black: { 3: 1, 1: 2, 12: 5, 17: 3, 19: 4 },
       turn: 'white',
-      dice: [3],
+      dice: [3, 1],
     })
     const legal = generateMoveSequences(state)
     expect(legal.some((sequence) => sequence.moves.every((move) => !move.hit))).toBe(true)

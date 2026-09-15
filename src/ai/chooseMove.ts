@@ -1,11 +1,6 @@
-import {
-  generateMoveSequences,
-} from '../engine/index.ts'
+import { generateMoveSequences } from '../engine/index.ts'
 import type { GameState, MoveSequence, Rng } from '../engine/index.ts'
-import {
-  DEFAULT_WEIGHTS,
-  evaluatePosition,
-} from './evaluation.ts'
+import { DEFAULT_WEIGHTS, evaluatePosition } from './evaluation.ts'
 import type { EvaluationWeights } from './evaluation.ts'
 
 export type Difficulty = 'easy' | 'normal'
