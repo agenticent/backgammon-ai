@@ -2,8 +2,10 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+import { applyMove, createInitialState } from './engine/index.ts'
 import { diceRng } from './engine/testHelpers.ts'
-import { STORAGE_KEY } from './game/session.ts'
+import { serializeSession, STORAGE_KEY } from './game/session.ts'
+import type { Move } from './engine/index.ts'
 
 beforeEach(() => {
   Element.prototype.scrollIntoView = () => {}
@@ -17,12 +19,29 @@ function point(n: number): HTMLElement {
   return element as HTMLElement
 }
 
+const throwing = {
+  getItem() {
+    throw new Error('blocked')
+  },
+  setItem() {
+    throw new Error('quota')
+  },
+  removeItem() {
+    throw new Error('blocked')
+  },
+} as unknown as Storage
+
 describe('App', () => {
   it('shows the start screen with a difficulty selector', () => {
     render(<App />)
     expect(screen.getByRole('heading', { name: 'Backgammon AI' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'New Game' })).toBeTruthy()
     expect(screen.getByRole('combobox')).toBeTruthy()
+  })
+
+  it('renders the start screen when storage is unavailable', () => {
+    render(<App storage={throwing} />)
+    expect(screen.getByRole('button', { name: 'New Game' })).toBeTruthy()
   })
 
   it('plays a human turn move by move, then hands over to the AI', async () => {
@@ -130,5 +149,24 @@ describe('App', () => {
     render(<App aiDelay={100000} />)
     expect(screen.getByRole('alert').textContent).toContain('White wins!')
     expect(screen.getByRole('button', { name: 'Play Again' })).toBeTruthy()
+  })
+
+  it('falls back to the start screen for an inconsistent saved session', () => {
+    const turnStart = createInitialState('white', [3, 1])
+    const move: Move = { from: 8, to: 5, die: 3, hit: false }
+    const state = applyMove(turnStart, move)
+    localStorage.setItem(
+      STORAGE_KEY,
+      serializeSession({
+        difficulty: 'normal',
+        state,
+        turnStart,
+        turnMoves: [],
+        log: [],
+      }),
+    )
+
+    render(<App aiDelay={100000} />)
+    expect(screen.getByRole('button', { name: 'New Game' })).toBeTruthy()
   })
 })

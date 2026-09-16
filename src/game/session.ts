@@ -1,4 +1,9 @@
-import { deserializeGameState, serializeGameState } from '../engine/index.ts'
+import {
+  applyMove,
+  deserializeGameState,
+  generateSingleMoves,
+  serializeGameState,
+} from '../engine/index.ts'
 import type { GameState, Move } from '../engine/index.ts'
 import type { Difficulty } from '../ai/index.ts'
 
@@ -14,6 +19,14 @@ export interface Session {
 }
 
 export const STORAGE_KEY = 'backgammon-ai/session'
+
+export function defaultStorage(): Storage | undefined {
+  try {
+    return globalThis.localStorage
+  } catch {
+    return undefined
+  }
+}
 
 function isMove(value: unknown): value is Move {
   if (typeof value !== 'object' || value === null) return false
@@ -46,10 +59,23 @@ export function deserializeSession(json: string): Session | null {
     if (typeof state !== 'string' || typeof turnStart !== 'string') return null
     if (!Array.isArray(turnMoves) || !turnMoves.every(isMove)) return null
     if (!Array.isArray(log) || !log.every((entry) => typeof entry === 'string')) return null
+    const parsedState = deserializeGameState(state)
+    const parsedTurnStart = deserializeGameState(turnStart)
+    if (turnMoves.length > 0 && parsedTurnStart.turn !== 'white') return null
+    let current = parsedTurnStart
+    for (const move of turnMoves) {
+      if (!current.dice.includes(move.die)) return null
+      const legal = generateSingleMoves(current, move.die).find(
+        (candidate) => candidate.from === move.from && candidate.to === move.to && candidate.hit === move.hit,
+      )
+      if (!legal) return null
+      current = applyMove(current, legal)
+    }
+    if (serializeGameState(current) !== serializeGameState(parsedState)) return null
     return {
       difficulty,
-      state: deserializeGameState(state),
-      turnStart: deserializeGameState(turnStart),
+      state: parsedState,
+      turnStart: parsedTurnStart,
       turnMoves,
       log,
     }
@@ -58,16 +84,25 @@ export function deserializeSession(json: string): Session | null {
   }
 }
 
-export function loadSession(storage: Storage | undefined = globalThis.localStorage): Session | null {
-  const json = storage?.getItem(STORAGE_KEY)
-  return json ? deserializeSession(json) : null
+export function loadSession(storage: Storage | undefined = defaultStorage()): Session | null {
+  if (!storage) return null
+  try {
+    const json = storage.getItem(STORAGE_KEY)
+    return json ? deserializeSession(json) : null
+  } catch {
+    return null
+  }
 }
 
 export function saveSession(
   session: Session | null,
-  storage: Storage | undefined = globalThis.localStorage,
+  storage: Storage | undefined = defaultStorage(),
 ): void {
   if (!storage) return
-  if (session === null) storage.removeItem(STORAGE_KEY)
-  else storage.setItem(STORAGE_KEY, serializeSession(session))
+  try {
+    if (session === null) storage.removeItem(STORAGE_KEY)
+    else storage.setItem(STORAGE_KEY, serializeSession(session))
+  } catch {
+    // Storage can be unavailable or full.
+  }
 }

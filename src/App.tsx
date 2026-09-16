@@ -15,7 +15,7 @@ import {
 } from './engine/index.ts'
 import type { Move, MoveSource, MoveTarget, Rng } from './engine/index.ts'
 import { Board } from './components/Board.tsx'
-import { loadSession, saveSession } from './game/session.ts'
+import { defaultStorage, loadSession, saveSession } from './game/session.ts'
 import type { Session } from './game/session.ts'
 import { formatTurn, movesFrom, pickMove, playerName, turnOptions } from './game/turn.ts'
 import './App.css'
@@ -60,7 +60,7 @@ function Dice({ dice }: { dice: number[] }) {
 }
 
 function App({ rng = Math.random, aiDelay = 700, passDelay = 1500, storage }: AppProps) {
-  const store = storage === undefined ? globalThis.localStorage : (storage ?? undefined)
+  const store = storage === undefined ? defaultStorage() : (storage ?? undefined)
   const [session, setSession] = useState<Session | null>(() => loadSession(store))
   const [difficulty, setDifficulty] = useState<Difficulty>(session?.difficulty ?? 'normal')
   const [selected, setSelected] = useState<MoveSource | null>(null)
