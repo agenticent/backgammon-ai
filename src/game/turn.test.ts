@@ -1,9 +1,44 @@
 import { describe, expect, it } from 'vitest'
-import { createInitialState, generateSingleMoves } from '../engine/index.ts'
+import {
+  applyMove,
+  createInitialState,
+  generateMoveSequences,
+  generateSingleMoves,
+  isLegalSequence,
+} from '../engine/index.ts'
+import type { GameState, Move } from '../engine/index.ts'
 import { buildState } from '../engine/testHelpers.ts'
 import { formatTurn, pickMove, turnOptions } from './turn.ts'
 
 describe('turnOptions', () => {
+  it('agrees with isLegalSequence on every candidate first move', () => {
+    const states: GameState[] = [
+      createInitialState('white', [3, 1]),
+      createInitialState('white', [6, 6]),
+      createInitialState('white', [2, 1]),
+      buildState({
+        white: { 6: 1, 1: 14 },
+        black: { 3: 2, 5: 2, 4: 2, 24: 9 },
+        dice: [5, 3],
+      }),
+    ]
+
+    for (const state of states) {
+      const expected: Move[] = []
+      for (const die of new Set(state.dice)) {
+        for (const move of generateSingleMoves(state, die)) {
+          const continuations = generateMoveSequences(applyMove(state, move))
+          const beginsLegal =
+            continuations.length === 0
+              ? isLegalSequence(state, [move])
+              : continuations.some((c) => isLegalSequence(state, [move, ...c.moves]))
+          if (beginsLegal) expected.push(move)
+        }
+      }
+      expect(turnOptions(state).firstMoves).toEqual(expected)
+    }
+  })
+
   it('lists every legal opening move from each point', () => {
     const { firstMoves, sequences } = turnOptions(createInitialState('white', [3, 1]))
     expect(sequences.length).toBeGreaterThan(0)

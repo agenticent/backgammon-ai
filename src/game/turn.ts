@@ -2,15 +2,13 @@ import {
   applyMove,
   generateMoveSequences,
   generateSingleMoves,
-  maxPlayableDice,
+  isLegalSequence,
 } from '../engine/index.ts'
 import type { GameState, Move, MoveSequence, MoveSource, MoveTarget, Player } from '../engine/index.ts'
 
 /**
- * Legal sequences for the remaining dice, plus the first moves the player may
- * make right now. The engine deduplicates sequences by final position, so a
- * first move is accepted when it can still be completed into a maximal turn,
- * not only when it literally begins one of the reported sequences.
+ * Legal sequences for the remaining dice, plus first moves accepted by the
+ * engine's `isLegalSequence` as the start of some complete turn.
  */
 export interface TurnOptions {
   sequences: MoveSequence[]
@@ -20,21 +18,20 @@ export interface TurnOptions {
 export function turnOptions(state: GameState): TurnOptions {
   const sequences = generateMoveSequences(state)
   if (sequences.length === 0) return { sequences, firstMoves: [] }
-
-  const targetLength = sequences[0].moves.length
-  const distinctDice = [...new Set(state.dice)].sort((a, b) => b - a)
-  const largest = distinctDice[0]
-  const largestPlayable =
-    targetLength === 1 && distinctDice.length > 1 && generateSingleMoves(state, largest).length > 0
-
   const firstMoves: Move[] = []
-  for (const die of distinctDice) {
-    if (largestPlayable && die !== largest) continue
+  for (const die of new Set(state.dice)) {
     for (const move of generateSingleMoves(state, die)) {
-      if (1 + maxPlayableDice(applyMove(state, move)) === targetLength) firstMoves.push(move)
+      if (beginsLegalTurn(state, move)) firstMoves.push(move)
     }
   }
   return { sequences, firstMoves }
+}
+
+/** A first move is playable when the engine accepts some full turn that starts with it. */
+function beginsLegalTurn(state: GameState, move: Move): boolean {
+  const continuations = generateMoveSequences(applyMove(state, move))
+  if (continuations.length === 0) return isLegalSequence(state, [move])
+  return continuations.some((c) => isLegalSequence(state, [move, ...c.moves]))
 }
 
 export function movesFrom(moves: Move[], from: MoveSource): Move[] {
