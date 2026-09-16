@@ -60,7 +60,7 @@ function Dice({ dice }: { dice: number[] }) {
 }
 
 function App({ rng = Math.random, aiDelay = 700, passDelay = 1500, storage }: AppProps) {
-  const store = storage === undefined ? defaultStorage() : (storage ?? undefined)
+  const store = storage === undefined ? defaultStorage() : storage
   const [session, setSession] = useState<Session | null>(() => loadSession(store))
   const [difficulty, setDifficulty] = useState<Difficulty>(session?.difficulty ?? 'normal')
   const [selected, setSelected] = useState<MoveSource | null>(null)

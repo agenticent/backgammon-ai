@@ -43,6 +43,14 @@ describe('session persistence', () => {
     expect(() => saveSession(someValidSession, throwing)).not.toThrow()
   })
 
+  it('does not fall back to localStorage when given null', () => {
+    localStorage.setItem('backgammon-ai/session', 'saved')
+
+    expect(loadSession(null)).toBeNull()
+    saveSession(null, null)
+    expect(localStorage.getItem('backgammon-ai/session')).toBe('saved')
+  })
+
   it('rejects a session whose state does not match turnStart plus turnMoves', () => {
     const turnStart = createInitialState('white', [3, 1])
     const move: Move = { from: 8, to: 5, die: 3, hit: false }

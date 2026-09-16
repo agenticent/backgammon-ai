@@ -44,6 +44,23 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'New Game' })).toBeTruthy()
   })
 
+  it('ignores localStorage when storage is null', () => {
+    const s = createInitialState('white', [3, 1])
+    const json = serializeSession({
+      difficulty: 'normal',
+      state: s,
+      turnStart: s,
+      turnMoves: [],
+      log: [],
+    })
+    localStorage.setItem(STORAGE_KEY, json)
+
+    render(<App storage={null} aiDelay={100000} />)
+
+    expect(screen.getByRole('button', { name: 'New Game' })).toBeTruthy()
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(json)
+  })
+
   it('plays a human turn move by move, then hands over to the AI', async () => {
     // Opening: white 3, black 1 -> white moves first with 3-1.
     const rng = diceRng([3, 1])

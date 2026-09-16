@@ -84,7 +84,8 @@ export function deserializeSession(json: string): Session | null {
   }
 }
 
-export function loadSession(storage: Storage | undefined = defaultStorage()): Session | null {
+/** Passing null disables persistence. */
+export function loadSession(storage: Storage | null | undefined = defaultStorage()): Session | null {
   if (!storage) return null
   try {
     const json = storage.getItem(STORAGE_KEY)
@@ -96,7 +97,7 @@ export function loadSession(storage: Storage | undefined = defaultStorage()): Se
 
 export function saveSession(
   session: Session | null,
-  storage: Storage | undefined = defaultStorage(),
+  storage: Storage | null | undefined = defaultStorage(),
 ): void {
   if (!storage) return
   try {
