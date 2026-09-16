@@ -6,6 +6,7 @@ import {
 } from '../engine/index.ts'
 import type { GameState, Move } from '../engine/index.ts'
 import type { Difficulty } from '../ai/index.ts'
+import { canCompleteTurn } from './turn.ts'
 
 export interface Session {
   difficulty: Difficulty
@@ -72,6 +73,7 @@ export function deserializeSession(json: string): Session | null {
       current = applyMove(current, legal)
     }
     if (serializeGameState(current) !== serializeGameState(parsedState)) return null
+    if (!canCompleteTurn(parsedTurnStart, turnMoves)) return null
     return {
       difficulty,
       state: parsedState,

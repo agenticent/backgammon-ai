@@ -1,5 +1,5 @@
 import {
-  applyMove,
+  applyMoves,
   generateMoveSequences,
   generateSingleMoves,
   isLegalSequence,
@@ -27,11 +27,16 @@ export function turnOptions(state: GameState): TurnOptions {
   return { sequences, firstMoves }
 }
 
+/** True when `moves` (already played from `start`) can still be extended into a turn the engine accepts. */
+export function canCompleteTurn(start: GameState, moves: Move[]): boolean {
+  const continuations = generateMoveSequences(applyMoves(start, moves))
+  if (continuations.length === 0) return isLegalSequence(start, moves)
+  return continuations.some((c) => isLegalSequence(start, [...moves, ...c.moves]))
+}
+
 /** A first move is playable when the engine accepts some full turn that starts with it. */
 function beginsLegalTurn(state: GameState, move: Move): boolean {
-  const continuations = generateMoveSequences(applyMove(state, move))
-  if (continuations.length === 0) return isLegalSequence(state, [move])
-  return continuations.some((c) => isLegalSequence(state, [move, ...c.moves]))
+  return canCompleteTurn(state, [move])
 }
 
 export function movesFrom(moves: Move[], from: MoveSource): Move[] {

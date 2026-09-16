@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { applyMove, createInitialState } from './engine/index.ts'
-import { diceRng } from './engine/testHelpers.ts'
+import { buildState, diceRng } from './engine/testHelpers.ts'
 import { serializeSession, STORAGE_KEY } from './game/session.ts'
 import type { Move } from './engine/index.ts'
 
@@ -185,5 +185,29 @@ describe('App', () => {
 
     render(<App aiDelay={100000} />)
     expect(screen.getByRole('button', { name: 'New Game' })).toBeTruthy()
+  })
+
+  it('falls back to the start screen instead of crashing when a saved partial turn cannot be completed', async () => {
+    const turnStart = buildState({
+      white: { 11: 1, 20: 1 },
+      black: { 5: 2, 9: 2, 22: 11 },
+      off: { white: 13 },
+      turn: 'white',
+      dice: [6, 5],
+    })
+    const stranded: Move = { from: 20, to: 15, die: 5, hit: false }
+    localStorage.setItem(
+      STORAGE_KEY,
+      serializeSession({
+        difficulty: 'normal',
+        state: applyMove(turnStart, stranded),
+        turnStart,
+        turnMoves: [stranded],
+        log: [],
+      }),
+    )
+
+    render(<App passDelay={10} aiDelay={100000} />)
+    await screen.findByRole('button', { name: 'New Game' })
   })
 })

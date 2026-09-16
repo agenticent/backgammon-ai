@@ -5,6 +5,7 @@ import {
   serializeGameState,
 } from '../engine/index.ts'
 import type { Move } from '../engine/index.ts'
+import { buildState } from '../engine/testHelpers.ts'
 import {
   deserializeSession,
   loadSession,
@@ -97,5 +98,25 @@ describe('session persistence', () => {
     expect(result).not.toBeNull()
     expect(result?.turnMoves).toHaveLength(1)
     expect(serializeGameState(result!.state)).toBe(serializeGameState(state))
+  })
+
+  it('rejects saved moves that cannot be completed into a legal turn', () => {
+    const turnStart = buildState({
+      white: { 11: 1, 20: 1 },
+      black: { 5: 2, 9: 2, 22: 11 },
+      off: { white: 13 },
+      turn: 'white',
+      dice: [6, 5],
+    })
+    const stranded: Move = { from: 20, to: 15, die: 5, hit: false }
+    const json = serializeSession({
+      difficulty: 'normal',
+      state: applyMove(turnStart, stranded),
+      turnStart,
+      turnMoves: [stranded],
+      log: [],
+    })
+
+    expect(deserializeSession(json)).toBeNull()
   })
 })
