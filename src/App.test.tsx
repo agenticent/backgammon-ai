@@ -67,7 +67,7 @@ describe('App', () => {
     render(<App rng={rng} aiDelay={100000} />)
     await userEvent.click(screen.getByRole('button', { name: 'New Game' }))
 
-    expect(screen.getByText(/Opening roll: White 3, Black 1/)).toBeTruthy()
+    expect(screen.queryByText(/Opening roll: White 3, Black 1/)).toBeNull()
     expect(screen.getByTestId('turn').textContent).toBe('White')
     expect(screen.getByLabelText('Dice 3 1')).toBeTruthy()
 
@@ -82,7 +82,7 @@ describe('App', () => {
     fireEvent.click(point(6))
     fireEvent.click(point(5))
 
-    expect(screen.getByText('White 3-1: 8/5 6/5')).toBeTruthy()
+    expect(screen.getByText('3-1: 8/5 6/5')).toBeTruthy()
     expect(screen.getByTestId('turn').textContent).toBe('Black')
     expect(screen.getByRole('button', { name: 'Undo' }).hasAttribute('disabled')).toBe(true)
   })
@@ -113,7 +113,7 @@ describe('App', () => {
       await act(async () => {
         vi.advanceTimersByTime(50)
       })
-      expect(screen.getByText(/^Black 3-1: /)).toBeTruthy()
+      expect(screen.getByText(/^3-1: /)).toBeTruthy()
       expect(screen.getByTestId('turn').textContent).toBe('White')
       expect(screen.getByRole('button', { name: 'Roll' }).hasAttribute('disabled')).toBe(false)
     } finally {
@@ -209,5 +209,93 @@ describe('App', () => {
 
     render(<App passDelay={10} aiDelay={100000} />)
     await screen.findByRole('button', { name: 'New Game' })
+  })
+
+  it('plays four consecutive bear-offs from one point', () => {
+    const state = buildState({
+      white: { 3: 4, 1: 2 },
+      black: { 24: 15 },
+      off: { white: 9 },
+      turn: 'white',
+      dice: [3, 3, 3, 3],
+    })
+    localStorage.setItem(
+      STORAGE_KEY,
+      serializeSession({
+        difficulty: 'normal',
+        state,
+        turnStart: state,
+        turnMoves: [],
+        log: [],
+      }),
+    )
+    render(<App storage={localStorage} aiDelay={100000} />)
+
+    fireEvent.click(point(3))
+    fireEvent.click(document.querySelector('.tray') as HTMLElement)
+    fireEvent.click(point(3))
+    fireEvent.click(document.querySelector('.tray') as HTMLElement)
+
+    expect(document.querySelector('.dice')?.textContent).toBe('33')
+    expect(point(3).getAttribute('aria-label')).toContain('2 white')
+  })
+
+  it('plays repeated moves from one point in a regular position', () => {
+    const state = buildState({
+      white: { 13: 5, 8: 3, 6: 5, 24: 2 },
+      black: { 1: 2, 12: 5, 17: 3, 19: 5 },
+      turn: 'white',
+      dice: [3, 3, 3, 3],
+    })
+    localStorage.setItem(
+      STORAGE_KEY,
+      serializeSession({
+        difficulty: 'normal',
+        state,
+        turnStart: state,
+        turnMoves: [],
+        log: [],
+      }),
+    )
+    render(<App storage={localStorage} aiDelay={100000} />)
+
+    fireEvent.click(point(13))
+    fireEvent.click(point(10))
+    fireEvent.click(point(13))
+    fireEvent.click(point(10))
+
+    expect(point(10).getAttribute('aria-label')).toContain('2 white')
+    expect(point(13).getAttribute('aria-label')).toContain('3 white')
+  })
+
+  it('groups the move log into newest-first white and black columns', () => {
+    const state = createInitialState('white', [])
+    localStorage.setItem(
+      STORAGE_KEY,
+      serializeSession({
+        difficulty: 'normal',
+        state,
+        turnStart: state,
+        turnMoves: [],
+        log: [
+          { player: 'white', notation: 'A' },
+          { player: 'black', notation: 'B' },
+          { player: 'white', notation: 'C' },
+        ],
+      }),
+    )
+    render(<App storage={localStorage} aiDelay={100000} />)
+
+    expect(
+      Array.from(document.querySelectorAll('.log-table thead th')).map((cell) => cell.textContent),
+    ).toEqual(['White', 'Black'])
+    expect(
+      Array.from(document.querySelectorAll('.log-table tbody tr')).map((row) =>
+        Array.from(row.querySelectorAll('td')).map((cell) => cell.textContent),
+      ),
+    ).toEqual([
+      ['C', ''],
+      ['A', 'B'],
+    ])
   })
 })

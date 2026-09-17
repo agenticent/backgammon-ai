@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { chooseMoveSequence } from './ai/index.ts'
 import type { Difficulty } from './ai/index.ts'
 import { pipCount } from './ai/index.ts'
@@ -17,7 +17,8 @@ import type { Move, MoveSource, MoveTarget, Rng } from './engine/index.ts'
 import { Board } from './components/Board.tsx'
 import { defaultStorage, loadSession, saveSession } from './game/session.ts'
 import type { Session } from './game/session.ts'
-import { formatTurn, movesFrom, pickMove, playerName, turnOptions } from './game/turn.ts'
+import { groupTurns } from './game/log.ts'
+import { movesFrom, pickMove, playerName, turnOptions, turnRecord } from './game/turn.ts'
 import './App.css'
 
 export interface AppProps {
@@ -40,9 +41,7 @@ function newSession(difficulty: Difficulty, rng: Rng): Session {
     state,
     turnStart: state,
     turnMoves: [],
-    log: [
-      `Opening roll: White ${opening.white}, Black ${opening.black} — ${playerName(opening.first)} moves first`,
-    ],
+    log: [],
   }
 }
 
@@ -64,16 +63,9 @@ function App({ rng = Math.random, aiDelay = 700, passDelay = 1500, storage }: Ap
   const [session, setSession] = useState<Session | null>(() => loadSession(store))
   const [difficulty, setDifficulty] = useState<Difficulty>(session?.difficulty ?? 'normal')
   const [selected, setSelected] = useState<MoveSource | null>(null)
-  const logRef = useRef<HTMLOListElement>(null)
-
   useEffect(() => {
     saveSession(session, store)
   }, [session, store])
-
-  const logLength = session?.log.length ?? 0
-  useEffect(() => {
-    logRef.current?.lastElementChild?.scrollIntoView({ block: 'nearest' })
-  }, [logLength])
 
   const state = session?.state ?? null
   const gameWinner = state ? winner(state) : null
@@ -92,7 +84,7 @@ function App({ rng = Math.random, aiDelay = 700, passDelay = 1500, storage }: Ap
       state: next,
       turnStart: next,
       turnMoves: [],
-      log: [...current.log, formatTurn(current.turnStart.turn, current.turnStart.dice, moves)],
+      log: [...current.log, turnRecord(current.turnStart.turn, current.turnStart.dice, moves)],
     }
   }, [])
 
@@ -269,11 +261,22 @@ function App({ rng = Math.random, aiDelay = 700, passDelay = 1500, storage }: Ap
 
       <aside className="log" aria-label="Move log">
         <h2>Moves</h2>
-        <ol ref={logRef}>
-          {session.log.map((entry, i) => (
-            <li key={i}>{entry}</li>
-          ))}
-        </ol>
+        <table className="log-table">
+          <thead>
+            <tr>
+              <th>White</th>
+              <th>Black</th>
+            </tr>
+          </thead>
+          <tbody>
+            {groupTurns(session.log).map((row, index) => (
+              <tr key={index}>
+                <td>{row.white ?? ''}</td>
+                <td>{row.black ?? ''}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </aside>
     </main>
   )

@@ -69,6 +69,7 @@ button.primary:not(:disabled):hover {
   flex-wrap: wrap;
   gap: 0.5rem 1.5rem;
   align-items: center;
+  min-height: 2rem;
 }
 
 .hud-item {
@@ -85,6 +86,8 @@ button.primary:not(:disabled):hover {
 }
 
 .hud .value {
+  min-width: 3.5em;
+  display: inline-block;
   font-weight: 600;
   text-transform: capitalize;
 }
@@ -92,6 +95,8 @@ button.primary:not(:disabled):hover {
 .dice {
   display: inline-flex;
   gap: 0.3rem;
+  min-width: calc(4 * 1.6rem + 3 * 0.3rem);
+  min-height: 1.6rem;
 }
 
 .dice.empty {
@@ -119,6 +124,7 @@ button.primary:not(:disabled):hover {
 
 .board {
   display: block;
+  aspect-ratio: 1000 / 640;
   width: 100%;
   height: auto;
   user-select: none;
@@ -186,10 +192,12 @@ button.primary:not(:disabled):hover {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  min-height: 2.6rem;
 }
 
 .status {
   margin: 0;
+  min-height: 1.5em;
   font-weight: 600;
 }
 
@@ -203,9 +211,10 @@ button.primary:not(:disabled):hover {
   border: 1px solid #8a6a4a55;
   border-radius: 8px;
   padding: 0.5rem 0.75rem;
-  max-height: 560px;
+  height: 560px;
   overflow-y: auto;
   font-size: 0.9rem;
+  background: Canvas;
 }
 
 .log h2 {
@@ -213,13 +222,30 @@ button.primary:not(:disabled):hover {
   font-size: 1rem;
 }
 
-.log ol {
-  margin: 0;
-  padding-left: 1.4rem;
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
 }
 
-.log li {
-  padding: 0.1rem 0;
+.log-table thead {
+  position: sticky;
+  top: 0;
+  background: inherit;
+}
+
+.log-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+
+.log-table td {
+  padding: 0.15rem 0.25rem;
+  word-break: break-word;
 }
 
 @media (max-width: 760px) {
@@ -237,7 +263,7 @@ button.primary:not(:disabled):hover {
   }
 
   .log {
-    max-height: 200px;
+    height: 200px;
   }
 
   .hud {
