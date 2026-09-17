@@ -134,12 +134,20 @@ describe('session persistence', () => {
     ])
   })
 
+  it('drops legacy opening-roll strings while migrating the log', () => {
+    const session = JSON.parse(serializeSession({ ...someValidSession, log: [] }))
+    session.log = ['Opening roll: White 3, Black 1 — White moves first', 'Black 3-1: 24/21 13/12']
+
+    expect(deserializeSession(JSON.stringify(session))?.log).toEqual([
+      { player: 'black', notation: '3-1: 24/21 13/12' },
+    ])
+  })
+
   it('rejects malformed log entries', () => {
     const session = JSON.parse(serializeSession({ ...someValidSession, log: [] }))
     for (const log of [
       [{ player: 'purple', notation: '3-1: 8/5 6/5' }],
       [{ player: 'white' }],
-      ['not a turn'],
     ]) {
       session.log = log
       expect(deserializeSession(JSON.stringify(session))).toBeNull()

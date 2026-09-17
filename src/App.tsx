@@ -41,10 +41,7 @@ function newSession(difficulty: Difficulty, rng: Rng): Session {
     state,
     turnStart: state,
     turnMoves: [],
-    log: [{
-      player: opening.first,
-      notation: `Opening roll: White ${opening.white}, Black ${opening.black} — ${playerName(opening.first)} moves first`,
-    }],
+    log: [],
   }
 }
 

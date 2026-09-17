@@ -67,7 +67,7 @@ describe('App', () => {
     render(<App rng={rng} aiDelay={100000} />)
     await userEvent.click(screen.getByRole('button', { name: 'New Game' }))
 
-    expect(screen.getByText(/Opening roll: White 3, Black 1/)).toBeTruthy()
+    expect(screen.queryByText(/Opening roll: White 3, Black 1/)).toBeNull()
     expect(screen.getByTestId('turn').textContent).toBe('White')
     expect(screen.getByLabelText('Dice 3 1')).toBeTruthy()
 

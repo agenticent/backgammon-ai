@@ -79,6 +79,13 @@ export function deserializeSession(json: string): Session | null {
     if (!Array.isArray(log)) return null
     const parsedLog: TurnRecord[] = []
     for (const entry of log) {
+      if (
+        typeof entry === 'string' &&
+        !entry.startsWith('White ') &&
+        !entry.startsWith('Black ')
+      ) {
+        continue
+      }
       const record = parseTurnRecord(entry)
       if (!record) return null
       parsedLog.push(record)
