@@ -82,7 +82,7 @@ describe('App', () => {
     fireEvent.click(point(6))
     fireEvent.click(point(5))
 
-    expect(screen.getByText('White 3-1: 8/5 6/5')).toBeTruthy()
+    expect(screen.getByText('3-1: 8/5 6/5')).toBeTruthy()
     expect(screen.getByTestId('turn').textContent).toBe('Black')
     expect(screen.getByRole('button', { name: 'Undo' }).hasAttribute('disabled')).toBe(true)
   })
@@ -113,7 +113,7 @@ describe('App', () => {
       await act(async () => {
         vi.advanceTimersByTime(50)
       })
-      expect(screen.getByText(/^Black 3-1: /)).toBeTruthy()
+      expect(screen.getByText(/^3-1: /)).toBeTruthy()
       expect(screen.getByTestId('turn').textContent).toBe('White')
       expect(screen.getByRole('button', { name: 'Roll' }).hasAttribute('disabled')).toBe(false)
     } finally {
@@ -266,5 +266,36 @@ describe('App', () => {
 
     expect(point(10).getAttribute('aria-label')).toContain('2 white')
     expect(point(13).getAttribute('aria-label')).toContain('3 white')
+  })
+
+  it('groups the move log into newest-first white and black columns', () => {
+    const state = createInitialState('white', [])
+    localStorage.setItem(
+      STORAGE_KEY,
+      serializeSession({
+        difficulty: 'normal',
+        state,
+        turnStart: state,
+        turnMoves: [],
+        log: [
+          { player: 'white', notation: 'A' },
+          { player: 'black', notation: 'B' },
+          { player: 'white', notation: 'C' },
+        ],
+      }),
+    )
+    render(<App storage={localStorage} aiDelay={100000} />)
+
+    expect(
+      Array.from(document.querySelectorAll('.log-table thead th')).map((cell) => cell.textContent),
+    ).toEqual(['White', 'Black'])
+    expect(
+      Array.from(document.querySelectorAll('.log-table tbody tr')).map((row) =>
+        Array.from(row.querySelectorAll('td')).map((cell) => cell.textContent),
+      ),
+    ).toEqual([
+      ['C', ''],
+      ['A', 'B'],
+    ])
   })
 })

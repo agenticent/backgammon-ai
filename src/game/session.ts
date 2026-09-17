@@ -6,6 +6,7 @@ import {
 } from '../engine/index.ts'
 import type { GameState, Move } from '../engine/index.ts'
 import type { Difficulty } from '../ai/index.ts'
+import type { TurnRecord } from './log.ts'
 import { canCompleteTurn } from './turn.ts'
 
 export interface Session {
@@ -16,7 +17,7 @@ export interface Session {
   turnStart: GameState
   /** Moves the human has made so far this turn. */
   turnMoves: Move[]
-  log: string[]
+  log: TurnRecord[]
 }
 
 export const STORAGE_KEY = 'backgammon-ai/session'
@@ -40,6 +41,22 @@ function isMove(value: unknown): value is Move {
   )
 }
 
+function parseTurnRecord(value: unknown): TurnRecord | null {
+  if (typeof value === 'object' && value !== null) {
+    const { player, notation } = value as Record<string, unknown>
+    if ((player === 'white' || player === 'black') && typeof notation === 'string') {
+      return { player, notation }
+    }
+    return null
+  }
+  if (typeof value !== 'string') return null
+  const separator = value.indexOf(' ')
+  if (separator <= 0) return null
+  const player = value.slice(0, separator).toLowerCase()
+  if (player !== 'white' && player !== 'black') return null
+  return { player, notation: value.slice(separator + 1) }
+}
+
 export function serializeSession(session: Session): string {
   return JSON.stringify({
     difficulty: session.difficulty,
@@ -59,7 +76,13 @@ export function deserializeSession(json: string): Session | null {
     if (difficulty !== 'easy' && difficulty !== 'normal') return null
     if (typeof state !== 'string' || typeof turnStart !== 'string') return null
     if (!Array.isArray(turnMoves) || !turnMoves.every(isMove)) return null
-    if (!Array.isArray(log) || !log.every((entry) => typeof entry === 'string')) return null
+    if (!Array.isArray(log)) return null
+    const parsedLog: TurnRecord[] = []
+    for (const entry of log) {
+      const record = parseTurnRecord(entry)
+      if (!record) return null
+      parsedLog.push(record)
+    }
     const parsedState = deserializeGameState(state)
     const parsedTurnStart = deserializeGameState(turnStart)
     if (turnMoves.length > 0 && parsedTurnStart.turn !== 'white') return null
@@ -79,7 +102,7 @@ export function deserializeSession(json: string): Session | null {
       state: parsedState,
       turnStart: parsedTurnStart,
       turnMoves,
-      log,
+      log: parsedLog,
     }
   } catch {
     return null

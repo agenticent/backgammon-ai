@@ -119,4 +119,30 @@ describe('session persistence', () => {
 
     expect(deserializeSession(json)).toBeNull()
   })
+
+  it('migrates legacy string log entries', () => {
+    const session = JSON.parse(
+      serializeSession({
+        ...someValidSession,
+        log: [],
+      }),
+    )
+    session.log = ['White 3-1: 8/5 6/5']
+
+    expect(deserializeSession(JSON.stringify(session))?.log).toEqual([
+      { player: 'white', notation: '3-1: 8/5 6/5' },
+    ])
+  })
+
+  it('rejects malformed log entries', () => {
+    const session = JSON.parse(serializeSession({ ...someValidSession, log: [] }))
+    for (const log of [
+      [{ player: 'purple', notation: '3-1: 8/5 6/5' }],
+      [{ player: 'white' }],
+      ['not a turn'],
+    ]) {
+      session.log = log
+      expect(deserializeSession(JSON.stringify(session))).toBeNull()
+    }
+  })
 })

@@ -5,6 +5,7 @@ import {
   isLegalSequence,
 } from '../engine/index.ts'
 import type { GameState, Move, MoveSequence, MoveSource, MoveTarget, Player } from '../engine/index.ts'
+import type { TurnRecord } from './log.ts'
 
 /**
  * Legal sequences for the remaining dice, plus first moves accepted by the
@@ -63,9 +64,15 @@ export function playerName(player: Player): string {
   return player === 'white' ? 'White' : 'Black'
 }
 
-/** "White 3-1: 8/5 6/5", with "(no move)" for a forfeited turn. */
-export function formatTurn(player: Player, roll: number[], moves: Move[]): string {
+/** Structured notation for a turn, with "(no move)" for a forfeited turn. */
+export function turnRecord(player: Player, roll: number[], moves: Move[]): TurnRecord {
   const dice = roll.length > 2 ? `${roll[0]}-${roll[0]}` : [...roll].sort((a, b) => b - a).join('-')
   const played = moves.length === 0 ? '(no move)' : moves.map((m) => formatMove(player, m)).join(' ')
-  return `${playerName(player)} ${dice}: ${played}`
+  return { player, notation: `${dice}: ${played}` }
+}
+
+/** "White 3-1: 8/5 6/5", with "(no move)" for a forfeited turn. */
+export function formatTurn(player: Player, roll: number[], moves: Move[]): string {
+  const record = turnRecord(player, roll, moves)
+  return `${playerName(record.player)} ${record.notation}`
 }

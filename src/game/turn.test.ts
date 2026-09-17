@@ -9,7 +9,7 @@ import {
 } from '../engine/index.ts'
 import type { GameState, Move } from '../engine/index.ts'
 import { buildState } from '../engine/testHelpers.ts'
-import { formatTurn, pickMove, turnOptions } from './turn.ts'
+import { formatTurn, pickMove, turnOptions, turnRecord } from './turn.ts'
 
 describe('turnOptions', () => {
   it('agrees with isLegalSequence on every candidate first move', () => {
@@ -171,5 +171,17 @@ describe('formatTurn', () => {
       ]),
     ).toBe('Black 6-6: bar/19* 6/off')
     expect(formatTurn('white', [2, 1], [])).toBe('White 2-1: (no move)')
+  })
+
+  it('splits a formatted turn into a player and notation', () => {
+    const record = turnRecord('white', [3, 1], [
+      { from: 8, to: 5, die: 3, hit: false },
+      { from: 6, to: 5, die: 1, hit: false },
+    ])
+    expect(record).toEqual({ player: 'white', notation: '3-1: 8/5 6/5' })
+    expect(formatTurn('white', [3, 1], [
+      { from: 8, to: 5, die: 3, hit: false },
+      { from: 6, to: 5, die: 1, hit: false },
+    ])).toBe(`White ${record.notation}`)
   })
 })
