@@ -5,6 +5,7 @@ import {
   generateMoveSequences,
   generateSingleMoves,
   isLegalSequence,
+  maxPlayableDice,
 } from '../engine/index.ts'
 import type { GameState, Move } from '../engine/index.ts'
 import { buildState } from '../engine/testHelpers.ts'
@@ -85,6 +86,61 @@ describe('turnOptions', () => {
       dice: [3, 2],
     })
     expect(turnOptions(state)).toEqual({ sequences: [], firstMoves: [] })
+  })
+})
+
+describe('doubles from the same point', () => {
+  const bearoff = buildState({
+    white: { 3: 4, 1: 2 },
+    black: { 24: 15 },
+    off: { white: 9 },
+    turn: 'white',
+    dice: [3, 3, 3, 3],
+  })
+  const regular = buildState({
+    white: { 13: 5, 8: 3, 6: 5, 24: 2 },
+    black: { 1: 2, 12: 5, 17: 3, 19: 5 },
+    turn: 'white',
+    dice: [3, 3, 3, 3],
+  })
+
+  it('allows four consecutive bear-offs from one point', () => {
+    const sequences = generateMoveSequences(bearoff)
+    expect(sequences.some((sequence) =>
+      sequence.moves.length === 4 &&
+      sequence.moves.every((move) => move.from === 3 && move.to === 'off'),
+    )).toBe(true)
+    expect(maxPlayableDice(bearoff)).toBe(4)
+  })
+
+  it('allows repeated moves from one point in a regular position', () => {
+    expect(
+      generateMoveSequences(regular).some(
+        (sequence) => sequence.moves.filter((move) => move.from === 13).length >= 2,
+      ),
+    ).toBe(true)
+  })
+
+  it('picks four consecutive bear-offs from one point in the UI options', () => {
+    let current = bearoff
+    for (let i = 0; i < 4; i += 1) {
+      const move = pickMove(turnOptions(current).firstMoves, 3, 'off')
+      expect(move).toBeDefined()
+      current = applyMove(current, move!)
+    }
+    expect(current.dice).toEqual([])
+    expect(current.off.white).toBe(13)
+  })
+
+  it('picks repeated moves from one point in the UI options', () => {
+    let current = regular
+    for (let i = 0; i < 2; i += 1) {
+      const move = pickMove(turnOptions(current).firstMoves, 13, 10)
+      expect(move).toBeDefined()
+      current = applyMove(current, move!)
+    }
+    expect(current.points[9]).toMatchObject({ player: 'white', count: 2 })
+    expect(current.points[12]).toMatchObject({ player: 'white', count: 3 })
   })
 })
 

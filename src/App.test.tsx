@@ -210,4 +210,61 @@ describe('App', () => {
     render(<App passDelay={10} aiDelay={100000} />)
     await screen.findByRole('button', { name: 'New Game' })
   })
+
+  it('plays four consecutive bear-offs from one point', () => {
+    const state = buildState({
+      white: { 3: 4, 1: 2 },
+      black: { 24: 15 },
+      off: { white: 9 },
+      turn: 'white',
+      dice: [3, 3, 3, 3],
+    })
+    localStorage.setItem(
+      STORAGE_KEY,
+      serializeSession({
+        difficulty: 'normal',
+        state,
+        turnStart: state,
+        turnMoves: [],
+        log: [],
+      }),
+    )
+    render(<App storage={localStorage} aiDelay={100000} />)
+
+    fireEvent.click(point(3))
+    fireEvent.click(document.querySelector('.tray') as HTMLElement)
+    fireEvent.click(point(3))
+    fireEvent.click(document.querySelector('.tray') as HTMLElement)
+
+    expect(document.querySelector('.dice')?.textContent).toBe('33')
+    expect(point(3).getAttribute('aria-label')).toContain('2 white')
+  })
+
+  it('plays repeated moves from one point in a regular position', () => {
+    const state = buildState({
+      white: { 13: 5, 8: 3, 6: 5, 24: 2 },
+      black: { 1: 2, 12: 5, 17: 3, 19: 5 },
+      turn: 'white',
+      dice: [3, 3, 3, 3],
+    })
+    localStorage.setItem(
+      STORAGE_KEY,
+      serializeSession({
+        difficulty: 'normal',
+        state,
+        turnStart: state,
+        turnMoves: [],
+        log: [],
+      }),
+    )
+    render(<App storage={localStorage} aiDelay={100000} />)
+
+    fireEvent.click(point(13))
+    fireEvent.click(point(10))
+    fireEvent.click(point(13))
+    fireEvent.click(point(10))
+
+    expect(point(10).getAttribute('aria-label')).toContain('2 white')
+    expect(point(13).getAttribute('aria-label')).toContain('3 white')
+  })
 })
